@@ -1,0 +1,117 @@
+{
+  "entities": {
+    "LocalizedText": {
+      "title": "LocalizedText",
+      "description": "Multilingual string map supporting Bengali (bn), English (en), and Arabic (ar).",
+      "type": "object",
+      "properties": {
+        "bn": { "type": "string", "maxLength": 4000 },
+        "en": { "type": "string", "maxLength": 4000 },
+        "ar": { "type": "string", "maxLength": 4000 }
+      },
+      "required": ["bn", "en", "ar"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global public website configuration, multilingual copy, images, section visibility, contact links, and published URL.",
+      "type": "object",
+      "properties": {
+        "logoUrl": { "type": "string", "maxLength": 300000 },
+        "heroImageUrl": { "type": "string", "maxLength": 300000 },
+        "aboutImageUrl": { "type": "string", "maxLength": 300000 },
+        "servicesImageUrl": { "type": "string", "maxLength": 300000 },
+        "publishedUrl": { "type": "string", "maxLength": 512 },
+        "sectionsVisibility": {
+          "type": "object",
+          "description": "Controls which public sections are published on the homepage."
+        },
+        "translations": {
+          "type": "object",
+          "description": "Complete bn, en, and ar institutional copy."
+        },
+        "contact": {
+          "type": "object",
+          "description": "Editable institutional contact numbers, email, maps, and social URLs."
+        },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": [
+        "logoUrl",
+        "heroImageUrl",
+        "aboutImageUrl",
+        "servicesImageUrl",
+        "publishedUrl",
+        "sectionsVisibility",
+        "translations",
+        "contact",
+        "updatedAt",
+        "updatedBy"
+      ]
+    },
+    "ServiceItem": {
+      "title": "ServiceItem",
+      "description": "An institutional service or information entry editable and orderable by the admin.",
+      "type": "object",
+      "properties": {
+        "order": { "type": "number" },
+        "published": { "type": "boolean" },
+        "imageUrl": { "type": "string", "maxLength": 300000 },
+        "title": { "$ref": "#/entities/LocalizedText" },
+        "description": { "$ref": "#/entities/LocalizedText" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["order", "published", "imageUrl", "title", "description", "createdAt", "updatedAt", "updatedBy"]
+    },
+    "VideoItem": {
+      "title": "VideoItem",
+      "description": "An embedded YouTube or Facebook video entry managed by the admin.",
+      "type": "object",
+      "properties": {
+        "platform": { "type": "string", "enum": ["youtube", "facebook"], "maxLength": 20 },
+        "videoUrl": { "type": "string", "maxLength": 1024 },
+        "thumbnailUrl": { "type": "string", "maxLength": 300000 },
+        "order": { "type": "number" },
+        "published": { "type": "boolean" },
+        "title": { "$ref": "#/entities/LocalizedText" },
+        "description": { "$ref": "#/entities/LocalizedText" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["platform", "videoUrl", "thumbnailUrl", "order", "published", "title", "description", "createdAt", "updatedAt", "updatedBy"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Authorized admin account entry managed exclusively by existing verified admins.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 256 },
+        "addedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "addedBy", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/site_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Singleton public configuration document ('main') storing branding, translations, images, and contact links."
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/ServiceItem" },
+      "description": "Institutional services and information cards displayed on the public homepage."
+    },
+    "/videos/{videoId}": {
+      "schema": { "$ref": "#/entities/VideoItem" },
+      "description": "Embedded YouTube and Facebook video gallery records."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Authorized admin UIDs granted write access to site settings, services, and videos."
+    }
+  }
+}

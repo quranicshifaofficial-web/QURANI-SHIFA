@@ -1,0 +1,223 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerified() && request.auth.token.email == 'quranicshifa.official@gmail.com';
+    }
+
+    function isAdmin() {
+      return isVerified() && (
+        isBootstrappedAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isLocalizedText(obj, maxLen) {
+      return obj is map
+        && obj.keys().hasAll(['bn', 'en', 'ar'])
+        && obj.keys().hasOnly(['bn', 'en', 'ar'])
+        && obj.bn is string && obj.bn.size() <= maxLen
+        && obj.en is string && obj.en.size() <= maxLen
+        && obj.ar is string && obj.ar.size() <= maxLen;
+    }
+
+    function isValidLangCopy(langMap) {
+      return langMap is map
+        && langMap.keys().hasAll([
+          'institutionName', 'heroKicker', 'heroHeadline', 'heroDescription', 'heroCtaText',
+          'aboutTitle', 'aboutSubtitle', 'aboutDescription', 'aboutMissionTitle', 'aboutMissionText',
+          'servicesTitle', 'servicesSubtitle', 'videoGalleryTitle', 'videoGallerySubtitle',
+          'contactTitle', 'contactSubtitle', 'footerDescription', 'copyrightText'
+        ])
+        && langMap.keys().hasOnly([
+          'institutionName', 'heroKicker', 'heroHeadline', 'heroDescription', 'heroCtaText',
+          'aboutTitle', 'aboutSubtitle', 'aboutDescription', 'aboutMissionTitle', 'aboutMissionText',
+          'servicesTitle', 'servicesSubtitle', 'videoGalleryTitle', 'videoGallerySubtitle',
+          'contactTitle', 'contactSubtitle', 'footerDescription', 'copyrightText'
+        ])
+        && langMap.institutionName is string && langMap.institutionName.size() <= 200
+        && langMap.heroKicker is string && langMap.heroKicker.size() <= 200
+        && langMap.heroHeadline is string && langMap.heroHeadline.size() <= 300
+        && langMap.heroDescription is string && langMap.heroDescription.size() <= 2000
+        && langMap.heroCtaText is string && langMap.heroCtaText.size() <= 120
+        && langMap.aboutTitle is string && langMap.aboutTitle.size() <= 200
+        && langMap.aboutSubtitle is string && langMap.aboutSubtitle.size() <= 300
+        && langMap.aboutDescription is string && langMap.aboutDescription.size() <= 5000
+        && langMap.aboutMissionTitle is string && langMap.aboutMissionTitle.size() <= 200
+        && langMap.aboutMissionText is string && langMap.aboutMissionText.size() <= 4000
+        && langMap.servicesTitle is string && langMap.servicesTitle.size() <= 200
+        && langMap.servicesSubtitle is string && langMap.servicesSubtitle.size() <= 500
+        && langMap.videoGalleryTitle is string && langMap.videoGalleryTitle.size() <= 200
+        && langMap.videoGallerySubtitle is string && langMap.videoGallerySubtitle.size() <= 500
+        && langMap.contactTitle is string && langMap.contactTitle.size() <= 200
+        && langMap.contactSubtitle is string && langMap.contactSubtitle.size() <= 500
+        && langMap.footerDescription is string && langMap.footerDescription.size() <= 1000
+        && langMap.copyrightText is string && langMap.copyrightText.size() <= 300;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll([
+          'logoUrl', 'heroImageUrl', 'aboutImageUrl', 'servicesImageUrl',
+          'publishedUrl', 'sectionsVisibility', 'translations', 'contact',
+          'updatedAt', 'updatedBy'
+        ])
+        && data.keys().hasOnly([
+          'logoUrl', 'heroImageUrl', 'aboutImageUrl', 'servicesImageUrl',
+          'publishedUrl', 'sectionsVisibility', 'translations', 'contact',
+          'updatedAt', 'updatedBy'
+        ])
+        && data.logoUrl is string && data.logoUrl.size() <= 300000
+        && data.heroImageUrl is string && data.heroImageUrl.size() <= 300000
+        && data.aboutImageUrl is string && data.aboutImageUrl.size() <= 300000
+        && data.servicesImageUrl is string && data.servicesImageUrl.size() <= 300000
+        && data.publishedUrl is string && data.publishedUrl.size() <= 512
+        && data.sectionsVisibility is map
+        && data.sectionsVisibility.keys().hasAll(['showHero', 'showAbout', 'showServices', 'showVideos', 'showContact'])
+        && data.sectionsVisibility.keys().hasOnly(['showHero', 'showAbout', 'showServices', 'showVideos', 'showContact'])
+        && data.sectionsVisibility.showHero is bool
+        && data.sectionsVisibility.showAbout is bool
+        && data.sectionsVisibility.showServices is bool
+        && data.sectionsVisibility.showVideos is bool
+        && data.sectionsVisibility.showContact is bool
+        && data.translations is map
+        && data.translations.keys().hasAll(['bn', 'en', 'ar'])
+        && data.translations.keys().hasOnly(['bn', 'en', 'ar'])
+        && isValidLangCopy(data.translations.bn)
+        && isValidLangCopy(data.translations.en)
+        && isValidLangCopy(data.translations.ar)
+        && data.contact is map
+        && data.contact.keys().hasAll([
+          'phone', 'whatsapp', 'imo', 'email',
+          'facebookPageUrl', 'messengerUrl', 'youtubeChannelUrl', 'googleMapsUrl', 'addressLabel'
+        ])
+        && data.contact.keys().hasOnly([
+          'phone', 'whatsapp', 'imo', 'email',
+          'facebookPageUrl', 'messengerUrl', 'youtubeChannelUrl', 'googleMapsUrl', 'addressLabel'
+        ])
+        && data.contact.phone is string && data.contact.phone.size() <= 100
+        && data.contact.whatsapp is string && data.contact.whatsapp.size() <= 100
+        && data.contact.imo is string && data.contact.imo.size() <= 100
+        && data.contact.email is string && data.contact.email.size() <= 200
+        && data.contact.facebookPageUrl is string && data.contact.facebookPageUrl.size() <= 512
+        && data.contact.messengerUrl is string && data.contact.messengerUrl.size() <= 512
+        && data.contact.youtubeChannelUrl is string && data.contact.youtubeChannelUrl.size() <= 512
+        && data.contact.googleMapsUrl is string && data.contact.googleMapsUrl.size() <= 1024
+        && data.contact.addressLabel is string && data.contact.addressLabel.size() <= 400
+        && data.updatedAt == request.time
+        && data.updatedBy == request.auth.uid;
+    }
+
+    function isValidServiceItem(data) {
+      return data.keys().hasAll(['order', 'published', 'imageUrl', 'title', 'description', 'createdAt', 'updatedAt', 'updatedBy'])
+        && data.keys().hasOnly(['order', 'published', 'imageUrl', 'title', 'description', 'createdAt', 'updatedAt', 'updatedBy'])
+        && data.order is number && data.order >= 0 && data.order <= 10000
+        && data.published is bool
+        && data.imageUrl is string && data.imageUrl.size() <= 300000
+        && isLocalizedText(data.title, 300)
+        && isLocalizedText(data.description, 3000)
+        && data.updatedAt == request.time
+        && data.updatedBy == request.auth.uid;
+    }
+
+    function isValidVideoItem(data) {
+      return data.keys().hasAll(['platform', 'videoUrl', 'thumbnailUrl', 'order', 'published', 'title', 'description', 'createdAt', 'updatedAt', 'updatedBy'])
+        && data.keys().hasOnly(['platform', 'videoUrl', 'thumbnailUrl', 'order', 'published', 'title', 'description', 'createdAt', 'updatedAt', 'updatedBy'])
+        && data.platform in ['youtube', 'facebook']
+        && data.videoUrl is string && data.videoUrl.size() >= 1 && data.videoUrl.size() <= 1024
+        && data.thumbnailUrl is string && data.thumbnailUrl.size() <= 300000
+        && data.order is number && data.order >= 0 && data.order <= 10000
+        && data.published is bool
+        && isLocalizedText(data.title, 300)
+        && isLocalizedText(data.description, 2000)
+        && data.updatedAt == request.time
+        && data.updatedBy == request.auth.uid;
+    }
+
+    function isValidAdminRecord(data, adminUid) {
+      return data.keys().hasAll(['uid', 'email', 'addedBy', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'email', 'addedBy', 'createdAt'])
+        && data.uid == adminUid
+        && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 256
+        && data.addedBy == request.auth.uid
+        && data.createdAt == request.time;
+    }
+
+    // 3. Site Settings ('main')
+    match /site_settings/{settingId} {
+      allow get: if isValidId(settingId) && settingId == 'main';
+      allow list: if isAdmin();
+      allow create: if isValidId(settingId) && settingId == 'main' && isAdmin() && isValidSiteSettings(incoming());
+      allow update: if isValidId(settingId) && settingId == 'main' && isAdmin() && isValidSiteSettings(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'logoUrl', 'heroImageUrl', 'aboutImageUrl', 'servicesImageUrl',
+          'publishedUrl', 'sectionsVisibility', 'translations', 'contact',
+          'updatedAt', 'updatedBy'
+        ]);
+      allow delete: if false;
+    }
+
+    // 4. Institutional Services / Information Items
+    match /services/{serviceId} {
+      allow get: if isValidId(serviceId) && (existing().published == true || isAdmin());
+      allow list: if existing().published == true || isAdmin();
+      allow create: if isValidId(serviceId) && isAdmin() && isValidServiceItem(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(serviceId) && isAdmin() && isValidServiceItem(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'order', 'published', 'imageUrl', 'title', 'description', 'updatedAt', 'updatedBy'
+        ]);
+      allow delete: if isValidId(serviceId) && isAdmin();
+    }
+
+    // 5. Video Gallery Records
+    match /videos/{videoId} {
+      allow get: if isValidId(videoId) && (existing().published == true || isAdmin());
+      allow list: if existing().published == true || isAdmin();
+      allow create: if isValidId(videoId) && isAdmin() && isValidVideoItem(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(videoId) && isAdmin() && isValidVideoItem(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'platform', 'videoUrl', 'thumbnailUrl', 'order', 'published', 'title', 'description', 'updatedAt', 'updatedBy'
+        ]);
+      allow delete: if isValidId(videoId) && isAdmin();
+    }
+
+    // 6. Authorized Admins Registry (No public registration)
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && isSignedIn() && (request.auth.uid == adminUid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(adminUid) && isAdmin() && isValidAdminRecord(incoming(), adminUid);
+      allow update: if false;
+      allow delete: if isValidId(adminUid) && isAdmin() && adminUid != request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* Multilingual font mapping */
+.font-bn {
+  font-family: 'Hind Siliguri', 'Noto Serif Bengali', sans-serif;
+}
+
+.font-bn-display {
+  font-family: 'Noto Serif Bengali', 'Hind Siliguri', serif;
+}
+
+.font-en {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-en-display {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-ar {
+  font-family: 'Noto Naskh Arabic', 'Amiri', serif;
+}
+
+.font-ar-display {
+  font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+}
+
+/* Subtle Islamic geometric lattice background */
+.islamic-lattice-bg {
+  background-color: #FAF8F3;
+  background-image: url("data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23064E3B' stroke-opacity='0.055' stroke-width='0.85'%3E%3Cpath d='M36 0L46.5 25.5L72 36L46.5 46.5L36 72L25.5 46.5L0 36L25.5 25.5Z'/%3E%3Crect x='14' y='14' width='44' height='44'/%3E%3Crect x='14' y='14' width='44' height='44' transform='rotate(45 36 36)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.islamic-emerald-lattice {
+  background-color: #064E3B;
+  background-image: url("data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23C9A254' stroke-opacity='0.12' stroke-width='0.9'%3E%3Cpath d='M36 0L46.5 25.5L72 36L46.5 46.5L36 72L25.5 46.5L0 36L25.5 25.5Z'/%3E%3Crect x='14' y='14' width='44' height='44'/%3E%3Crect x='14' y='14' width='44' height='44' transform='rotate(45 36 36)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Print stylesheet specifically for Admin QR Code card */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #qr-print-sheet,
+  #qr-print-sheet * {
+    visibility: visible !important;
+  }
+  #qr-print-sheet {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}

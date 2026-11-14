@@ -1,0 +1,6 @@
+{
+  "name": "কুরআনী শিফা | QURANI SHIFA",
+  "description": "কুরআনী শিফা (QURANI SHIFA / قرآني شفاء) — Official institutional website featuring multilingual content in Bengali, English, and Arabic, an embedded YouTube and Facebook video gallery, direct contact channels, and a secure admin panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
